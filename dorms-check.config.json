@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "중국어 숫자 손글씨 마스터",
+    "url": "https://chinese-number-writer.vercel.app",
+    "stack": "Vite"
+  },
+  "tracks": [
+    "security"
+  ],
+  "edzipCase": null,
+  "teacher": {
+    "dormsHandle": ""
+  },
+  "ownershipConfirmed": true
+}
