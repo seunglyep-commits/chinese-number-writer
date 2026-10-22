@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #fbf9f5;
+    color: #272320;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* 중국어 미쯔거(米字格) 훈련용 격자 배경 */
+.mizige-bg {
+  background-color: #fffefb;
+  background-image: 
+    linear-gradient(to right, rgba(239, 68, 68, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(239, 68, 68, 0.25) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(239, 68, 68, 0.12) 1px, transparent 1px),
+    linear-gradient(-45deg, rgba(239, 68, 68, 0.12) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position: center center;
+}
+
+/* 톈쯔거(田字格) 훈련용 십자 격자 배경 */
+.tianzige-bg {
+  background-color: #fffefb;
+  position: relative;
+}
+
+.tianzige-bg::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed rgba(220, 38, 38, 0.3);
+  pointer-events: none;
+}
+
+.tianzige-bg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px dashed rgba(220, 38, 38, 0.3);
+  pointer-events: none;
+}
+
+/* 터치 제스처 방지 for Canvas */
+canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
