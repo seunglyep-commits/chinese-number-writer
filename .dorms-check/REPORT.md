@@ -15,11 +15,9 @@
 
 ### 보완하면 좋은 항목
 
-- Content-Security-Policy: content-security-policy 보완 권장: 누락
+- Content-Security-Policy: content-security-policy 보완 권장: script-src에 nonce/hash 없는 'unsafe-inline' 사용
 - CORS 설정: 와일드카드(*) 허용 — 공개 API면 무방, 인증 API면 위험
-- Open Graph: Open Graph 태그
-- canonical: canonical 링크
-- 헤더 설정 위치: 헤더 설정 발견: x-frame-options, x-content-type-options, referrer-policy, permissions-policy
+- 헤더 설정 위치: 헤더 설정 발견: content-security-policy, x-frame-options, x-content-type-options, referrer-policy, permissions-policy
 
 ### 확인하지 못한 항목
 
@@ -50,7 +48,9 @@
 - 페이지 제목: <title> 있음
 - 설명 메타: 설명 메타
 - 모바일 viewport: viewport 메타
-- 응답 속도: 응답 시간 540ms
+- Open Graph: Open Graph 태그
+- canonical: canonical 링크
+- 응답 속도: 응답 시간 370ms
 - 문서 크기: 문서 크기 2KB
 - 압축: 압축: br
 - 하드코딩 시크릿: 하드코딩 시크릿 미검출

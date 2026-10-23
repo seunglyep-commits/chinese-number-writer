@@ -16,6 +16,22 @@
         },
         "blocking": []
       }
+    },
+    {
+      "n": 2,
+      "at": "2026-10-22T06:33:18.376Z",
+      "security": {
+        "score": null,
+        "grade": null,
+        "eligible": true,
+        "outcome": "eligible",
+        "coverage": {
+          "checked": 31,
+          "unverified": 4,
+          "notApplicable": 1
+        },
+        "blocking": []
+      }
     }
   ],
   "items": {
@@ -164,15 +180,15 @@
       "regressed": false
     },
     "seo.og": {
-      "status": "info",
+      "status": "pass",
       "firstFailRound": null,
-      "fixedRound": null,
+      "fixedRound": 2,
       "regressed": false
     },
     "seo.canonical": {
-      "status": "info",
+      "status": "pass",
       "firstFailRound": null,
-      "fixedRound": null,
+      "fixedRound": 2,
       "regressed": false
     },
     "perf.ttfb": {

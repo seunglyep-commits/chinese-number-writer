@@ -3,7 +3,6 @@ import { CHINESE_NUMBERS } from './data/chineseNumbers';
 import type { ChineseNumberData } from './data/chineseNumbers';
 import { HandwritingCanvas } from './components/HandwritingCanvas';
 import { StrokeOrderGuide } from './components/StrokeOrderGuide';
-import { PronunciationCard } from './components/PronunciationCard';
 import { NumberSelector } from './components/NumberSelector';
 import { QuizMode } from './components/QuizMode';
 import {
@@ -22,7 +21,11 @@ import {
   BookOpen,
   CheckCircle,
   HelpCircle,
+  Lightbulb,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react';
+import { TONE_COLORS } from './data/chineseNumbers';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'practice' | 'quiz' | 'stats'>('practice');
@@ -31,15 +34,33 @@ export const App: React.FC = () => {
   const [filterOnlyBookmarked, setFilterOnlyBookmarked] = useState(false);
   const [isPlayingAll, setIsPlayingAll] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [playingWord, setPlayingWord] = useState<string | null>(null);
 
   useEffect(() => {
     initVoices();
   }, []);
 
+  const currentIndex = CHINESE_NUMBERS.findIndex((n) => n.id === currentNumber.id);
+
   const handleSelectNumber = (num: ChineseNumberData) => {
     setCurrentNumber(num);
-    // 숫자 선택 시 자동으로 해당 숫자 표준 발음 한번 들려주기
     playChineseAudio(num.char, 0.85);
+  };
+
+  const handlePrevNumber = () => {
+    if (currentIndex > 0) {
+      handleSelectNumber(CHINESE_NUMBERS[currentIndex - 1]);
+    } else {
+      handleSelectNumber(CHINESE_NUMBERS[CHINESE_NUMBERS.length - 1]);
+    }
+  };
+
+  const handleNextNumber = () => {
+    if (currentIndex < CHINESE_NUMBERS.length - 1) {
+      handleSelectNumber(CHINESE_NUMBERS[currentIndex + 1]);
+    } else {
+      handleSelectNumber(CHINESE_NUMBERS[0]);
+    }
   };
 
   const handleScoreRecorded = (score: number) => {
@@ -56,7 +77,7 @@ export const App: React.FC = () => {
   const handlePlaySequence = async () => {
     if (isPlayingAll) return;
     setIsPlayingAll(true);
-    for (let i = 0; i <= 10; i++) {
+    for (let i = 0; i < CHINESE_NUMBERS.length; i++) {
       const item = CHINESE_NUMBERS[i];
       if (item) {
         setCurrentNumber(item);
@@ -67,6 +88,12 @@ export const App: React.FC = () => {
     setIsPlayingAll(false);
   };
 
+  const handlePlayWord = async (chinese: string) => {
+    setPlayingWord(chinese);
+    await playChineseAudio(chinese, 0.85);
+    setPlayingWord(null);
+  };
+
   const currentProgress = learningState.progress[currentNumber.id] || {
     practicedCount: 0,
     bestScore: 0,
@@ -74,8 +101,10 @@ export const App: React.FC = () => {
     isBookmarked: false,
   };
 
+  const toneConfig = TONE_COLORS[currentNumber.tone as keyof typeof TONE_COLORS] || TONE_COLORS[1];
+
   // 통계 계산
-  const totalNumbersCount = CHINESE_NUMBERS.length;
+  const totalNumbersCount = CHINESE_NUMBERS.length; // 11개 (0~10)
   const practicedNumbersCount = Object.values(learningState.progress).filter(
     (p) => p.practicedCount > 0
   ).length;
@@ -84,21 +113,21 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-800 flex flex-col">
       {/* 최상단 네비게이션 헤더 */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-stone-200/80 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-200/80 shadow-xs">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-rose-600 flex items-center justify-center text-white shadow-md shadow-red-500/20">
-              <span className="font-chinese font-black text-2xl">数</span>
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-600 flex items-center justify-center text-white shadow-md shadow-red-500/20">
+              <span className="font-chinese font-black text-2xl">写</span>
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-black text-stone-900 tracking-tight flex items-center gap-1.5">
                 중국어 숫자 손글씨 마스터
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 hidden sm:inline-block">
-                  간화자 & 발음
+                  0~10 간화자
                 </span>
               </h1>
               <p className="text-[11px] text-stone-500 hidden sm:block">
-                획순 손글씨 연습 · 성조 병음 발음 · 실시간 평가 퀴즈
+                米자 격자 손글씨 쓰기 · 4성 발음 듣기 · 스마트 퀴즈 평가
               </p>
             </div>
           </div>
@@ -108,20 +137,20 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrentTab('practice')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 currentTab === 'practice'
                   ? 'bg-white text-red-700 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <PenTool className="w-3.5 h-3.5" />
-              <span>손글씨 & 발음</span>
+              <span>손글씨 쓰기</span>
             </button>
 
             <button
               type="button"
               onClick={() => setCurrentTab('quiz')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 currentTab === 'quiz'
                   ? 'bg-white text-red-700 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900'
@@ -134,7 +163,7 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrentTab('stats')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 currentTab === 'stats'
                   ? 'bg-white text-red-700 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900'
@@ -148,12 +177,12 @@ export const App: React.FC = () => {
       </header>
 
       {/* 서브 액션 배너 */}
-      <section className="bg-gradient-to-r from-red-700 via-rose-700 to-amber-700 text-white py-2.5 px-4 shadow-sm">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+      <section className="bg-gradient-to-r from-red-700 via-rose-700 to-amber-700 text-white py-2 px-4 shadow-sm">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
             <span className="font-medium">
-              오늘의 중국어 숫자 완전 정복: <strong>0(零)부터 10(十)</strong> 및 큰 수의 간화자와 4성 발음을 연습하세요!
+              중국어 기초 완성: <strong>0(零)부터 10(十)까지</strong> 손글씨를 직접 쓰고 발음을 들어보세요!
             </span>
           </div>
 
@@ -165,7 +194,7 @@ export const App: React.FC = () => {
               className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white font-semibold transition-colors flex items-center gap-1 active:scale-95 disabled:opacity-50"
             >
               <Volume2 className={`w-3.5 h-3.5 ${isPlayingAll ? 'animate-bounce' : ''}`} />
-              {isPlayingAll ? '0~10 연속 재생 중...' : '0~10 연속 듣기'}
+              {isPlayingAll ? '0~10 연속 재생 중...' : '0~10 음성 듣기'}
             </button>
             <button
               type="button"
@@ -173,18 +202,18 @@ export const App: React.FC = () => {
               className="px-2.5 py-1 bg-black/20 hover:bg-black/30 rounded-lg text-amber-200 font-semibold transition-colors flex items-center gap-1"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              성조 & 필순 도움말
+              성조 & 필순 안내
             </button>
           </div>
         </div>
       </section>
 
       {/* 메인 콘텐츠 영역 */}
-      <main className="max-w-6xl mx-auto px-4 py-6 flex-1 w-full flex flex-col gap-6">
-        {/* TAB 1: 손글씨 & 발음 연습 모드 */}
+      <main className="max-w-5xl mx-auto px-4 py-6 flex-1 w-full flex flex-col gap-6">
+        {/* TAB 1: 손글씨 쓰기 메인 스튜디오 */}
         {currentTab === 'practice' && (
           <div className="flex flex-col gap-6">
-            {/* 숫자 빠른 선택기 */}
+            {/* 1. 숫자 빠른 선택 바 (0부터 10) */}
             <NumberSelector
               currentNumber={currentNumber}
               onSelectNumber={handleSelectNumber}
@@ -193,48 +222,121 @@ export const App: React.FC = () => {
               onToggleFilterBookmarked={() => setFilterOnlyBookmarked(!filterOnlyBookmarked)}
             />
 
-            {/* 학습 메인 그리드 (좌: 발음/성조 카드 & 획순, 우: 손글씨 캔버스) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* 좌측 컬럼 (발음 카드 & 획순 가이드) */}
-              <div className="lg:col-span-7 flex flex-col gap-5">
-                <PronunciationCard
-                  numberData={currentNumber}
-                  isBookmarked={currentProgress.isBookmarked}
-                  onToggleBookmark={handleToggleBookmark}
-                  bestScore={currentProgress.bestScore}
-                  practicedCount={currentProgress.practicedCount}
-                />
+            {/* 2. 대형 손글씨 쓰기 스튜디오 (화면의 메인 주인공) */}
+            <HandwritingCanvas
+              key={currentNumber.id}
+              numberData={currentNumber}
+              onScoreRecorded={handleScoreRecorded}
+              onPrevNumber={handlePrevNumber}
+              onNextNumber={handleNextNumber}
+              hasPrev={true}
+              hasNext={true}
+            />
 
-                <StrokeOrderGuide numberData={currentNumber} />
-              </div>
-
-              {/* 우측 컬럼 (손글씨 캔버스 & 채점) */}
-              <div className="lg:col-span-5 flex flex-col">
-                <div className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-sm flex flex-col items-center">
-                  <div className="flex items-center justify-between w-full mb-3 pb-2 border-b border-stone-100">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-5 rounded-full bg-red-600 inline-block" />
-                      <h3 className="text-base font-bold text-stone-900">
-                        손글씨 쓰기 연습
-                      </h3>
-                    </div>
-                    <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                      米자 격자 훈련
-                    </span>
+            {/* 3. 손글씨 아래 보조 학습 정보 카드 그리드 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto w-full">
+              {/* 카드 A: 발음 성조 꿀팁 & 중국 고유 한 손 숫자 제스처 */}
+              <div className="bg-white rounded-3xl p-5 border border-stone-200/90 shadow-xs flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-4 rounded-full bg-red-600" />
+                    <h4 className="text-xs font-bold text-stone-800">
+                      성조 & 손동작 팁
+                    </h4>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleBookmark}
+                    className="text-stone-400 hover:text-amber-500 transition-colors p-1"
+                    title={currentProgress.isBookmarked ? '복습함에서 제거' : '복습함에 저장'}
+                  >
+                    {currentProgress.isBookmarked ? (
+                      <BookmarkCheck className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    ) : (
+                      <Bookmark className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
 
-                  <p className="text-xs text-stone-500 mb-4 text-center leading-relaxed">
-                    마우스나 펜, 손가락으로 격자 안에 직접 써보세요.<br />
-                    작성 후 <strong>[채점하기]</strong>를 누르면 획의 균형과 정확도를 평가합니다.
-                  </p>
+                {/* 성조 팁 */}
+                <div className={`p-3 rounded-2xl ${toneConfig.light} border ${toneConfig.border} text-xs leading-relaxed text-stone-700`}>
+                  <span className={`font-bold ${toneConfig.text}`}>{currentNumber.toneName}: </span>
+                  {currentNumber.toneTip}
+                </div>
 
-                  <HandwritingCanvas
-                    key={currentNumber.id}
-                    numberData={currentNumber}
-                    onScoreRecorded={handleScoreRecorded}
-                  />
+                {/* 중국 한 손 숫자 손동작 */}
+                <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl border border-stone-200">
+                  <div className="text-3xl p-2 bg-white rounded-xl shadow-xs border border-stone-200">
+                    {currentNumber.handGesture.symbol}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-stone-900">
+                      {currentNumber.handGesture.title}
+                    </div>
+                    <div className="text-[11px] text-stone-600 mt-0.5 leading-snug">
+                      {currentNumber.handGesture.description}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 연상 암기 팁 */}
+                <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 text-xs text-stone-700 flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-amber-900">암기 비법: </span>
+                    {currentNumber.mnemonic}
+                  </div>
                 </div>
               </div>
+
+              {/* 카드 B: 실생활 활용 단어 & 표현 */}
+              <div className="bg-white rounded-3xl p-5 border border-stone-200/90 shadow-xs flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-4 rounded-full bg-amber-500" />
+                    <h4 className="text-xs font-bold text-stone-800">
+                      실생활 활용 단어
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-stone-400">터치하여 발음 듣기</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {currentNumber.sampleWords.map((word, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handlePlayWord(word.chinese)}
+                      className="p-3 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors flex items-center justify-between text-left group"
+                    >
+                      <div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-chinese font-bold text-lg text-stone-900 group-hover:text-red-600">
+                            {word.chinese}
+                          </span>
+                          <span className="text-xs font-mono text-red-600 font-semibold">
+                            {word.pinyin}
+                          </span>
+                        </div>
+                        <div className="text-xs text-stone-600 mt-0.5">
+                          {word.korean}
+                        </div>
+                      </div>
+                      <Volume2 className={`w-4 h-4 text-stone-400 group-hover:text-red-500 flex-shrink-0 ${playingWord === word.chinese ? 'text-red-600 animate-pulse' : ''}`} />
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-2 text-[11px] text-stone-400 flex items-center justify-between">
+                  <span>누적 연습 {currentProgress.practicedCount}회</span>
+                  <span>최고 점수: <strong className="text-red-600">{currentProgress.bestScore > 0 ? `${currentProgress.bestScore}점` : '미기록'}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. 획순 상세 설명 가이드 */}
+            <div className="max-w-xl mx-auto w-full">
+              <StrokeOrderGuide numberData={currentNumber} />
             </div>
           </div>
         )}
@@ -248,14 +350,14 @@ export const App: React.FC = () => {
 
         {/* TAB 3: 학습 통계 및 현황 대시보드 */}
         {currentTab === 'stats' && (
-          <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
+          <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm">
               <h2 className="text-xl font-bold text-stone-900 mb-1 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-red-600" />
-                내 중국어 숫자 학습 성취 현황
+                중국어 숫자(0~10) 학습 성취 현황
               </h2>
               <p className="text-xs text-stone-500 mb-6">
-                연습한 글자 수, 손글씨 최고 점수, 퀴즈 이력을 한눈에 확인합니다.
+                기초 숫자 0부터 10까지 손글씨 연습 현황과 퀴즈 이력을 확인합니다.
               </p>
 
               {/* 요약 카드 그리드 */}
@@ -297,32 +399,38 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* 각 숫자별 상세 연습 현황 그리드 */}
+              {/* 각 숫자별 상세 연습 현황 그리드 (0부터 10까지 11개) */}
               <h3 className="text-sm font-bold text-stone-900 mb-3 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-red-600" />
-                글자별 손글씨 달성 현황
+                숫자(0~10) 손글씨 달성 현황
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 mb-8">
+              <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-11 gap-2 mb-8">
                 {CHINESE_NUMBERS.map((n) => {
                   const p = learningState.progress[n.id];
                   const hasDone = p && p.practicedCount > 0;
                   return (
-                    <div
+                    <button
                       key={n.id}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
+                      type="button"
+                      onClick={() => {
+                        handleSelectNumber(n);
+                        setCurrentTab('practice');
+                      }}
+                      className={`p-3 rounded-2xl border text-center transition-all hover:scale-105 ${
                         hasDone
-                          ? 'bg-stone-50 border-stone-200'
-                          : 'bg-stone-50/40 border-dashed border-stone-200 opacity-60'
+                          ? 'bg-red-50/50 border-red-200'
+                          : 'bg-stone-50/50 border-dashed border-stone-200 opacity-60'
                       }`}
                     >
                       <div className="font-chinese font-bold text-2xl text-stone-900">
                         {n.char}
                       </div>
-                      <div className="text-[11px] font-mono text-red-600">{n.pinyin}</div>
-                      <div className="text-[10px] text-stone-400 mt-1">
-                        {hasDone ? `최고 ${p.bestScore}점` : '미연습'}
+                      <div className="text-[11px] font-mono text-red-600 font-semibold">{n.pinyin}</div>
+                      <div className="text-[10px] text-stone-500 mt-0.5">{n.value}</div>
+                      <div className="text-[10px] font-bold text-amber-700 mt-1">
+                        {hasDone ? `${p.bestScore}점` : '미연습'}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -395,10 +503,10 @@ export const App: React.FC = () => {
                   1. 중국어 4대 성조(四声)의 비밀
                 </h4>
                 <ul className="space-y-1 bg-stone-50 p-3 rounded-xl border border-stone-200">
-                  <li><strong>제1성 (—):</strong> 솔(Sol) 음높이로 높고 길게 평평하게 유지 (예: yī, sān, bā)</li>
-                  <li><strong>제2성 (/):</strong> 놀랄 때 "응?" 하듯이 중간에서 높은 음으로 올리기 (예: líng, shí)</li>
-                  <li><strong>제3성 (∨):</strong> 낮게 내려갔다가 부드럽게 올리기 (예: wǔ, jiǔ, bǎi)</li>
-                  <li><strong>제4성 (\):</strong> 단호하게 아래로 뚝 떨어뜨려 발음 (예: èr, sì, liù)</li>
+                  <li><strong>제1성 (—):</strong> 솔(Sol) 음높이로 높고 길게 평평하게 유지 (예: yī 一, sān 三, bā 八)</li>
+                  <li><strong>제2성 (/):</strong> 질문할 때 "응?" 하듯이 중간에서 높은 음으로 올리기 (예: líng 零, shí 十)</li>
+                  <li><strong>제3성 (∨):</strong> 낮게 내려갔다가 부드럽게 올리기 (예: wǔ 五, jiǔ 九)</li>
+                  <li><strong>제4성 (\):</strong> 단호하게 아래로 뚝 떨어뜨려 발음 (예: èr 二, sì 四, liù 六)</li>
                 </ul>
               </div>
 
@@ -410,17 +518,17 @@ export const App: React.FC = () => {
                   <li>위에서 아래로 씁니다 (예: 二, 三)</li>
                   <li>왼쪽에서 오른쪽으로 씁니다 (예: 川)</li>
                   <li>가로획을 먼저 긋고 세로획을 관통합니다 (예: 十)</li>
-                  <li>바깥 틀을 세우고 안쪽을 채운 뒤 맨 마지막에 닫습니다 (예: 四, 百)</li>
-                  <li>좌우 대칭 글자는 가운데 중심을 먼저 씁니다 (예: 小, 水)</li>
+                  <li>바깥 틀을 세우고 안쪽을 채운 뒤 맨 마지막에 닫습니다 (예: 四)</li>
+                  <li>좌우 대칭 글자는 가운데 중심을 먼저 씁니다 (예: 六)</li>
                 </ol>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 mb-1 text-sm text-red-700">
-                  3. 중국 현지 한 손 숫자 제스처
+                  3. 중국 현지 한 손 숫자 제스처 (1~10)
                 </h4>
                 <p className="bg-stone-50 p-3 rounded-xl border border-stone-200">
-                  중국에서는 1부터 10까지를 한 손으로 모두 표현할 수 있습니다! 특히 <strong>6(🤙 전화기), 7(🤌 모으기), 8(👉 권총), 9(☝️ 갈고리), 10(✊ 주먹)</strong>은 시장이나 상점에서 매우 유용하게 쓰입니다.
+                  중국에서는 1부터 10까지를 한 손으로 모두 표현합니다! <strong>6(🤙 전화기), 7(🤌 모으기), 8(👉 권총), 9(☝️ 갈고리), 10(✊ 주먹)</strong> 손동작을 활용해보세요.
                 </p>
               </div>
             </div>
@@ -438,12 +546,12 @@ export const App: React.FC = () => {
 
       {/* 푸터 */}
       <footer className="mt-auto py-5 bg-stone-100 border-t border-stone-200/80 text-center text-xs text-stone-500">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            중국어 숫자 손글씨 쓰기 & 발음 마스터 (Chinese Number Handwriting & Pronunciation Master)
+            중국어 숫자(0~10) 손글씨 마스터 (Chinese Number Handwriting Master)
           </span>
           <span className="text-stone-400">
-            HTML5 Canvas · Web Speech API · LocalStorage
+            米字格 Canvas · Web Speech API · LocalStorage
           </span>
         </div>
       </footer>

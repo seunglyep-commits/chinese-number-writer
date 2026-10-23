@@ -394,7 +394,8 @@ export const QuizMode: React.FC = () => {
             key={currentQ.targetNumber.id}
             numberData={currentQ.targetNumber}
             onScoreRecorded={handleWritingScoreRecorded}
-            showAudioButton={false}
+            hasPrev={false}
+            hasNext={false}
           />
           {writingScore !== null && (
             <div className="mt-3 text-center">
